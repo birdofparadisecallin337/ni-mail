@@ -3,10 +3,19 @@ main = "worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# ── 自定義域名（域名需已托管在 Cloudflare）────────────────────────
+# ── 自定義域名（可選，域名需已托管在 Cloudflare）─────────────────
 # Cloudflare 會自動建立 DNS 記錄並簽發 SSL，無需手動操作
-# 取消下面兩行注釋並填入你的域名即可
+# 支持多個域名，每個加一段 [[routes]]
 # [[routes]]
-# pattern = "mail.yourdomain.com"
+# pattern = "mail.domain-a.com"
+# custom_domain = true
+#
+# [[routes]]
+# pattern = "mail.domain-b.com"
 # custom_domain = true
 # ─────────────────────────────────────────────────────────────────
+
+# KV 綁定和 AUTH_KEY 請在 Cloudflare 控制台設定：
+# Workers & Pages → ni-mail → Settings → Variables and Secrets / Bindings
+# KV namespace binding 名稱必須為 MAIL_KV
+# AUTH_KEY 建議設為 Secret 類型

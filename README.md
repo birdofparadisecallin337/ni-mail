@@ -11,11 +11,15 @@
 - 🔑 API Key 鑑權
 - 🌐 支持多個自定義域名（域名需托管在 Cloudflare）
 - 📦 僅依賴 `postal-mime`，無其他依賴
+- 🚫 附件只保留 metadata，不存 base64，避免撞 KV 25MB 限制
 
 ## 前置條件
 
 - 域名已托管在 Cloudflare
 - 已啟用 Cloudflare Email Routing
+
+> ⚠️ 收信地址必須是托管在 Cloudflare 的真實域名（如 `user@yourdomain.com`），
+> `*.workers.dev` 不支持 Email Routing，發往 workers.dev 地址的信不會被收到。
 
 ## 部署
 
@@ -25,68 +29,59 @@
 
 點擊按鈕後，Cloudflare 會自動 Fork 此 repo 並完成代碼部署。
 
-部署完成後，還需手動完成以下兩步：
+部署完成後，還需在控制台完成以下配置：
 
-**1. 建立 KV Namespace 並綁定**
+**1. 綁定 KV Namespace**
 
-```bash
-wrangler kv:namespace create MAIL_KV
-```
+Cloudflare 控制台 → Workers & Pages → `ni-mail` → Settings → Bindings → 新增 KV Namespace：
+- 名稱：`MAIL_KV`
+- 選擇已建立的 KV namespace（若尚未建立，先到 Workers & Pages → KV → Create namespace）
 
-複製輸出的 `id`，前往 Cloudflare 控制台 → Workers & Pages → 你的 worker → Settings → Bindings → 新增 KV Namespace，名稱填 `MAIL_KV`，選擇剛建立的 namespace。
+**2. 設定 AUTH_KEY**
 
-**2. 設定環境變數**
+Settings → Variables and Secrets → 新增：
+- 類型：**Secret**
+- 變數名稱：`AUTH_KEY`
+- 值：自訂一個密碼
 
-Cloudflare 控制台 → Workers & Pages → 你的 worker → Settings → Variables → 新增：
+儲存後點 **Deploy** 讓設定生效。
 
-| 變數名 | 值 |
-|---|---|
-| `AUTH_KEY` | 自訂一個密碼 |
+**3. 設定 Email Routing**
+
+Cloudflare 控制台 → 你的域名 → Email → Email Routing → Routing rules → Catch-all：
+- Action：Send to Worker
+- 選擇 `ni-mail`
 
 ---
 
 ### 方式二：本地 CLI 部署
 
-**1. 安裝依賴**
-
 ```bash
-npm install wrangler postal-mime
-```
+git clone https://github.com/mskatoni/ni-mail.git
+cd ni-mail
+npm install
 
-**2. 建立 KV Namespace**
-
-```bash
+# 建立 KV Namespace
 wrangler kv:namespace create MAIL_KV
 ```
 
-複製輸出的 `id`，填入 `wrangler.toml`。
-
-**3. 配置 `wrangler.toml`**
+複製輸出的 ID，在 Cloudflare 控制台綁定，或直接加進 `wrangler.toml`：
 
 ```toml
-[vars]
-AUTH_KEY = "換成你的密碼"
-
 [[kv_namespaces]]
 binding = "MAIL_KV"
-id = "貼上剛才的 KV ID"
+id = "你的 KV ID"
 ```
-
-**4. 部署**
 
 ```bash
 wrangler deploy
 ```
 
-**5. 設定 Email Routing**
-
-Cloudflare 控制台 → Email → Email Routing → Catch-all rule → Action: Send to Worker → 選擇 `mail-worker`
-
 ## 自定義域名（可選）
 
 > 域名必須已托管在 Cloudflare，無需手動建立 DNS 記錄，Cloudflare 會自動處理並簽發 SSL。
 
-在 `wrangler.toml` 中取消注釋並填入你的子域名，支持多個：
+在 `wrangler.toml` 中取消注釋，支持多個：
 
 ```toml
 [[routes]]
@@ -114,25 +109,58 @@ custom_domain = true
 **範例**
 
 ```bash
-# 使用自定義域名取得最新郵件
-curl https://mail.yourdomain.com/latest \
+curl https://ni-mail.你的帳號.workers.dev/latest \
   -H "X-Auth-Key: 你的密碼"
+```
 
-# 回應範例
+**成功回應（有郵件）**
+
+```json
 {
-  "id": "uuid-xxxx",
-  "receivedAt": "2025-03-22T10:00:00.000Z",
+  "id": "7eb63a8d-1195-4124-9eb3-fb4c2673e90c",
+  "receivedAt": "2026-03-22T10:28:01.506Z",
   "from": "[email protected]",
   "to": "[email protected]",
-  "subject": "驗證碼：123456",
-  "text": "你的驗證碼是 123456",
-  "html": "<p>你的驗證碼是 123456</p>",
-  "attachments": [
-    { "filename": "report.pdf", "mimeType": "application/pdf", "size": 102400 }
-  ]
+  "subject": "beta",
+  "text": "beta\n\n",
+  "html": "<div dir=\"ltr\">beta</div>\n\n",
+  "attachments": []
 }
+```
+
+**無郵件時（HTTP 404）**
+
+```json
+{ "error": "no mail" }
+```
+
+**鑑權失敗（HTTP 401）**
+
+```json
+{ "error": "unauthorized" }
 ```
 
 ## License
 
 Apache License 2.0
+
+## 常見問題
+
+### error code: 1101
+
+Worker 運行時拋出未捕獲異常，最常見原因是 **KV Namespace 沒有正確綁定**。
+
+確認步驟：控制台 → Workers & Pages → `ni-mail` → Settings → Bindings，確認有一條：
+
+| 類型 | 名稱 | 值 |
+|---|---|---|
+| KV Namespace | `MAIL_KV` | 你建立的 namespace |
+
+如果是空的，重新新增並點 **Save** 後重新部署即可。
+
+### AUTH_KEY 建議使用 Secret 而非 Text
+
+Settings → Variables and Secrets 新增 `AUTH_KEY` 時，類型請選 **Secret（密鑰）**，不要選 Text（文本）。
+
+- **Secret**：值加密儲存，部署後不可見，適合密碼類資訊
+- **Text**：明文儲存，任何有控制台權限的人都能看到

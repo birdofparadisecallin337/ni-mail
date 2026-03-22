@@ -1,6 +1,6 @@
-# mail-worker
+# ni-mail
 
-一個極簡的 Cloudflare Worker，用於接收域名郵件並提供 HTTP API 讀取。
+一個極簡的 Cloudflare Worker，用於接收私人域名郵件並提供 HTTP API 讀取。
 
 無需資料庫、無需前端、無需 JWT，部署後即可通過 API 取得最新郵件內容。
 
@@ -21,7 +21,7 @@
 
 ### 方式一：Cloudflare 一鍵部署
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/OWNER/REPO)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mskatoni/ni-mail)
 
 點擊按鈕後，Cloudflare 會自動 Fork 此 repo 並完成代碼部署。
 

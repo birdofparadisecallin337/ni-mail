@@ -13,6 +13,20 @@
 - 📦 僅依賴 `postal-mime`，無其他依賴
 - 🚫 附件只保留 metadata，不存 base64，避免撞 KV 25MB 限制
 
+## 工作原理
+
+```
+外部郵件 → 你的域名 MX（Cloudflare Email Routing）
+                  ↓ catch-all 轉發
+         Cloudflare Worker（收信 + HTTP API）
+                  ↓ 存儲
+         Cloudflare KV（最近 50 封）
+                  ↓ 讀取
+         curl /latest → 自動化腳本
+```
+
+郵件到達後由 `postal-mime` 解析為結構化 JSON，通過帶鑑權的 HTTP API 按需讀取，無需輪詢、無需訂閱。
+
 ## 前置條件
 
 - 域名已托管在 Cloudflare
@@ -40,7 +54,7 @@ Cloudflare 控制台 → Workers & Pages → `ni-mail` → Settings → Bindings
 **2. 設定 AUTH_KEY**
 
 Settings → Variables and Secrets → 新增：
-- 類型：**Secret**
+- 類型：**Secret（密鑰）**，不要選 Text（明文可見）
 - 變數名稱：`AUTH_KEY`
 - 值：自訂一個密碼
 
@@ -109,7 +123,7 @@ custom_domain = true
 **範例**
 
 ```bash
-curl https://ni-mail.你的帳號.workers.dev/latest \
+curl https://your-worker.workers.dev/latest \
   -H "X-Auth-Key: 你的密碼"
 ```
 
@@ -140,10 +154,6 @@ curl https://ni-mail.你的帳號.workers.dev/latest \
 { "error": "unauthorized" }
 ```
 
-## License
-
-Apache License 2.0
-
 ## 常見問題
 
 ### error code: 1101
@@ -164,3 +174,17 @@ Settings → Variables and Secrets 新增 `AUTH_KEY` 時，類型請選 **Secret
 
 - **Secret**：值加密儲存，部署後不可見，適合密碼類資訊
 - **Text**：明文儲存，任何有控制台權限的人都能看到
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mskatoni/ni-mail&type=Date)](https://star-history.com/#mskatoni/ni-mail&Date)
+
+## 社區
+
+<a href="https://v2ex.com"><img src="https://user-images.githubusercontent.com/80169337/122051970-cd075b80-ce02-11eb-9653-0b8702377727.png" width="24" height="24" alt="V2EX" /></a>&nbsp;
+<a href="https://www.nodeseek.com/post-659586-1"><img src="https://github.com/user-attachments/assets/0c6db696-769c-4d79-997c-9bc014cc6895" width="24" height="24" alt="NodeSeek" /></a>&nbsp;
+<img src="https://github.com/user-attachments/assets/adecea2c-2bcf-47ac-ac50-7758a6640b60" width="24" height="24" alt="linuxdo" />
+
+## License
+
+Apache License 2.0

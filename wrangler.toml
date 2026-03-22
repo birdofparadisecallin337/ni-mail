@@ -10,10 +10,3 @@ compatibility_flags = ["nodejs_compat"]
 # pattern = "mail.yourdomain.com"
 # custom_domain = true
 # ─────────────────────────────────────────────────────────────────
-
-[vars]
-AUTH_KEY = "換成你的密碼"
-
-[[kv_namespaces]]
-binding = "MAIL_KV"
-id = "貼上你的 KV Namespace ID"

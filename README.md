@@ -183,7 +183,6 @@ Settings → Variables and Secrets 新增 `AUTH_KEY` 時，類型請選 **Secret
 
 <a href="https://v2ex.com"><img src="https://user-images.githubusercontent.com/80169337/122051970-cd075b80-ce02-11eb-9653-0b8702377727.png" width="24" height="24" alt="V2EX" /></a>&nbsp;
 <a href="https://www.nodeseek.com/post-659586-1"><img src="https://github.com/user-attachments/assets/0c6db696-769c-4d79-997c-9bc014cc6895" width="24" height="24" alt="NodeSeek" /></a>&nbsp;
-<img src="https://github.com/user-attachments/assets/adecea2c-2bcf-47ac-ac50-7758a6640b60" width="24" height="24" alt="linuxdo" />
 
 ## License
 

